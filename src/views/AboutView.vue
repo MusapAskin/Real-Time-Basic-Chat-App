@@ -7,6 +7,6 @@
       uygulamaya giren başka kullanıcılarla anlık mesajlaşma gerçekleştirilir.
       Yazılan mesajlar cloud firestoreda saklanır.<br /><br />
     </h3>
-    <p1>2023 İlkbahar - Yaz Dönemi<</p1>
+    <p1>2023 İlkbahar - Yaz Dönemi</p1>
   </div>
 </template>

@@ -22,7 +22,7 @@
             <div class="chat_list active_chat">
               <div class="chat_people">
                 <div class="chat_img">
-                  <img src="../userfoto/mustafaaltinoz.png" alt="mustafa" />
+                  <img src="../photos/user/mustafaaltinoz.png" alt="mustafa" />
                 </div>
                 <div class="chat_ib">
                   <h5>
@@ -46,7 +46,9 @@
               >
                 <div class="received_withd_msg">
                   <p>{{ message.message }}</p>
-                  <span class="time_date"> {{ message.author }}</span>
+                  <span class="time_date">
+                    {{ message.craetedAt }} | {{ message.author }}</span
+                  >
                 </div>
               </div>
             </div>
@@ -60,9 +62,11 @@
                 class="write_msg"
                 placeholder="Type a message"
               />
-              <button class="msg_send_btn" type="button">
-                <i class="fa fa-paper-plane-o" aria-hidden="true"></i>
-              </button>
+              <i
+                class="msg_btn fa fa-microphone"
+                id="record"
+                @click="voiceRecord()"
+              ></i>
             </div>
           </div>
         </div>
@@ -70,8 +74,11 @@
     </div>
   </div>
 </template>
+
 <script>
 import firebase from 'firebase';
+
+var isRecord = false;
 
 export default {
   name: 'chat',
@@ -85,6 +92,41 @@ export default {
   },
 
   methods: {
+    voiceRecord() {
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(mic => {
+        const startStop = document.getElementById('record');
+        const mediaRecorder = new MediaRecorder(mic);
+        th;
+        startStop.addEventListener('click', function (e) {
+          try {
+            if (isRecord) {
+              isRecord = false;
+              mediaRecorder.stop();
+              startStop.style = '';
+            } else {
+              isRecord = true;
+              mediaRecorder.start();
+              startStop.style = 'color:green';
+            }
+          } catch (err) {
+            console.log(err);
+          }
+        });
+
+        var dataArray = [];
+
+        mediaRecorder.ondataavailable = function (e) {
+          dataArray.push(e.data);
+        };
+
+        mediaRecorder.onstop = function (e) {
+          let audioData = new Blob(dataArray, { type: 'audio/mp3' });
+          dataArray = [];
+          console.log(audioData);
+        };
+      });
+    },
+
     scrollToBottom() {
       let box = document.querySelector('.msg_history');
       box.scrollTop = box.scrollHeight;
@@ -96,7 +138,7 @@ export default {
         .add({
           message: this.message,
           author: this.authUser.displayName,
-          craetedAt: new Date().toDateString(),
+          craetedAt: new Date().toLocaleString(),
         })
         .then(() => {
           this.scrollToBottom();
@@ -105,19 +147,22 @@ export default {
     },
 
     fetchMessages() {
-      db.collection('chat').onSnapshot(querySnapshot => {
-        var allMessages = [];
-        querySnapshot.forEach(doc => {
-          allMessages.push(doc.data());
-        });
-        this.messages = allMessages;
+      db.collection('chat')
+        .orderBy('craetedAt')
+        .onSnapshot(querySnapshot => {
+          var allMessages = [];
+          querySnapshot.forEach(doc => {
+            allMessages.push(doc.data());
+          });
+          this.messages = allMessages;
 
-        setTimeout(() => {
-          this.scrollToBottom();
-        }, 1000);
-      });
+          setTimeout(() => {
+            this.scrollToBottom();
+          }, 500);
+        });
     },
   },
+
   created() {
     firebase.auth().onAuthStateChanged(user => {
       if (user) {
@@ -126,6 +171,7 @@ export default {
         this.authUser = {};
       }
     });
+
     this.fetchMessages();
   },
 
@@ -296,33 +342,31 @@ img {
 }
 .sent_msg {
   float: right;
-  width: 46%;
+  width: 45%;
 }
 .input_msg_write input {
-  background: rgba(0, 0, 0, 0) none repeat scroll 0 0;
-  border: medium none;
+  background: snow none repeat scroll 0 0;
   color: #4c4c4c;
   font-size: 15px;
   min-height: 48px;
-  width: 100%;
+  width: 80%;
 }
 
 .type_msg {
-  border-top: 1px solid #c4c4c4;
+  border: 0px solid black;
   position: relative;
 }
-.msg_send_btn {
-  background: #05728f none repeat scroll 0 0;
-  border: medium none;
+.msg_btn {
+  border: 0px;
+  font-size: 48px;
   border-radius: 50%;
-  color: #fff;
   cursor: pointer;
-  font-size: 17px;
-  height: 33px;
+  font-size: 48px;
+  height: 50px;
   position: absolute;
-  right: 0;
-  top: 11px;
-  width: 33px;
+  right: 0px;
+  top: 0px;
+  width: 50px;
 }
 .messaging {
   padding: 0 0 50px 0;
