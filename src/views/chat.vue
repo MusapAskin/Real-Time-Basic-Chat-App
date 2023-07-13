@@ -2,38 +2,6 @@
   <div class="container">
     <div class="messaging">
       <div class="inbox_msg">
-        <div class="inbox_people">
-          <div class="headind_srch">
-            <div class="recent_heading">
-              <h4>Recent</h4>
-            </div>
-            <div class="srch_bar">
-              <div class="stylish-input-group">
-                <input type="text" class="search-bar" placeholder="Search" />
-                <span class="input-group-addon">
-                  <button type="button">
-                    <i class="fa fa-search" aria-hidden="true"></i>
-                  </button>
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="inbox_chat">
-            <div class="chat_list active_chat">
-              <div class="chat_people">
-                <div class="chat_img">
-                  <img src="../photos/user/mustafaaltinoz.png" alt="mustafa" />
-                </div>
-                <div class="chat_ib">
-                  <h5>
-                    Mustafa Altınöz
-                    <span class="chat_date"></span>
-                  </h5>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
         <div class="mesgs">
           <div class="msg_history">
             <div v-for="message in messages" class="incoming_msg">
@@ -49,6 +17,11 @@
                   <span class="time_date">
                     {{ message.craetedAt }} | {{ message.author }}</span
                   >
+                  <div class="audio">
+                    <audio id="audioController" controls></audio
+                    ><img src="../photos/download.png" id="download" />
+                    <span> {{ message.craetedAt }} | {{ message.author }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -65,8 +38,16 @@
               <i
                 class="msg_btn fa fa-microphone"
                 id="record"
-                @click="voiceRecord()"
+                @click="startRecording()"
               ></i>
+              <button
+                class="stop"
+                id="stopButton"
+                @click="stopRecording()"
+              ></button>
+              <div class="audio" id="audio" controls>
+                <source src="" type="video/webm" />
+              </div>
             </div>
           </div>
         </div>
@@ -77,9 +58,9 @@
 
 <script>
 import firebase from 'firebase';
-
-var isRecord = false;
-
+let recorder;
+var audioURL;
+var items = [];
 export default {
   name: 'chat',
 
@@ -92,44 +73,49 @@ export default {
   },
 
   methods: {
-    voiceRecord() {
-      navigator.mediaDevices.getUserMedia({ audio: true }).then(mic => {
-        const startStop = document.getElementById('record');
-        const mediaRecorder = new MediaRecorder(mic);
-        th;
-        startStop.addEventListener('click', function (e) {
-          try {
-            if (isRecord) {
-              isRecord = false;
-              mediaRecorder.stop();
-              startStop.style = '';
-            } else {
-              isRecord = true;
-              mediaRecorder.start();
-              startStop.style = 'color:green';
-            }
-          } catch (err) {
-            console.log(err);
+    startRecording() {
+      document.getElementById('stopButton').style = 'visibility:visible';
+      var device = navigator.mediaDevices.getUserMedia({ audio: true });
+      device.then(stream => {
+        recorder = new MediaRecorder(stream);
+        recorder.ondataavailable = event => {
+          items.push(event.data);
+          if (recorder.state == 'inactive') {
+            let audioBlob = new Blob(items, { type: 'audio/webm' });
+            document.getElementById('audio').innerHTML =
+              '<source src"' +
+              URL.createObjectURL(audioBlob) +
+              '"type="video/webm"/>';
+            URL.createObjectURL(audioBlob);
+            audioURL = document.getElementById('audio').src =
+              URL.createObjectURL(audioBlob);
+            console.log('Kaydedildi');
+            const downloadLink = document.createElement('a');
+            downloadLink.href = audioURL;
+            downloadLink.download = 'recording.wav';
+            downloadLink.innerHTML = '↓';
+            document.body.appendChild(downloadLink);
           }
-        });
-
-        var dataArray = [];
-
-        mediaRecorder.ondataavailable = function (e) {
-          dataArray.push(e.data);
         };
-
-        mediaRecorder.onstop = function (e) {
-          let audioData = new Blob(dataArray, { type: 'audio/mp3' });
-          dataArray = [];
-          console.log(audioData);
-        };
+        recorder.start();
+        console.log('kayıt başladı');
+        setTimeout(() => {
+          recorder.stop();
+          console.log('kayıt durdu');
+        }, 50000);
       });
+    },
+    stopRecording() {
+      recorder.stop();
     },
 
     scrollToBottom() {
-      let box = document.querySelector('.msg_history');
-      box.scrollTop = box.scrollHeight;
+      try {
+        let box = document.querySelector('.msg_history');
+        box.scrollTop = box.scrollHeight;
+      } catch (error) {
+        //console.log(error);
+      }
     },
 
     saveMessage() {
@@ -194,108 +180,11 @@ export default {
   max-width: 1170px;
   margin: auto;
 }
-img {
-  max-width: 100%;
-}
-.inbox_people {
-  background: #f8f8f8 none repeat scroll 0 0;
-  float: left;
-  overflow: hidden;
-  width: 40%;
-  border-right: 1px solid #c4c4c4;
-}
+
 .inbox_msg {
   border: 1px solid #c4c4c4;
   clear: both;
   overflow: hidden;
-}
-.top_spac {
-  margin: 20px 0 0;
-}
-
-.recent_heading {
-  float: left;
-  width: 40%;
-}
-.srch_bar {
-  display: inline-block;
-  text-align: right;
-  width: 60%;
-}
-.headind_srch {
-  padding: 10px 29px 10px 20px;
-  overflow: hidden;
-  border-bottom: 1px solid #c4c4c4;
-}
-
-.recent_heading h4 {
-  color: #05728f;
-  font-size: 21px;
-  margin: auto;
-}
-.srch_bar input {
-  border: 1px solid #cdcdcd;
-  border-width: 0 0 1px 0;
-  width: 80%;
-  padding: 2px 0 4px 6px;
-  background: none;
-}
-.srch_bar .input-group-addon button {
-  background: rgba(0, 0, 0, 0) none repeat scroll 0 0;
-  border: medium none;
-  padding: 0;
-  color: #707070;
-  font-size: 18px;
-}
-.srch_bar .input-group-addon {
-  margin: 0 0 0 -27px;
-}
-
-.chat_ib h5 {
-  font-size: 15px;
-  color: #464646;
-  margin: 0 0 8px 0;
-}
-.chat_ib h5 span {
-  font-size: 13px;
-  float: right;
-}
-.chat_ib p {
-  font-size: 14px;
-  color: #989898;
-  margin: auto;
-}
-.chat_img {
-  float: left;
-  width: 11%;
-}
-.chat_ib {
-  float: left;
-  padding: 0 0 0 15px;
-  width: 88%;
-}
-
-.chat_people {
-  overflow: hidden;
-  clear: both;
-}
-.chat_list {
-  border-bottom: 1px solid #c4c4c4;
-  margin: 0;
-  padding: 18px 16px 10px;
-}
-.inbox_chat {
-  height: 550px;
-  overflow-y: scroll;
-}
-
-.active_chat {
-  background: #ebebeb;
-}
-
-.incoming_msg_img {
-  display: inline-block;
-  width: 6%;
 }
 .received_msg {
   display: inline-block;
@@ -312,12 +201,6 @@ img {
   padding: 5px 10px 5px 12px;
   width: 100%;
 }
-.time_date {
-  color: #747474;
-  display: block;
-  font-size: 12px;
-  margin: 8px 0 0;
-}
 .received_withd_msg {
   width: 57%;
 }
@@ -325,6 +208,18 @@ img {
   float: left;
   padding: 30px 15px 0 25px;
   width: 60%;
+}
+
+.time_date {
+  color: #747474;
+  display: block;
+  font-size: 12px;
+  margin: 8px 0 0;
+}
+
+.mesgs {
+  padding: 10px 0px 0px 10px;
+  width: 100%;
 }
 
 .sent_msg p {
@@ -342,31 +237,53 @@ img {
 }
 .sent_msg {
   float: right;
-  width: 45%;
+  width: 46%;
 }
 .input_msg_write input {
-  background: snow none repeat scroll 0 0;
+  background: rgba(0, 0, 0, 0) none repeat scroll 0 0;
+  border: medium none;
   color: #4c4c4c;
   font-size: 15px;
   min-height: 48px;
-  width: 80%;
+  width: 100%;
 }
 
 .type_msg {
-  border: 0px solid black;
+  border-top: 1px solid #c4c4c4;
   position: relative;
 }
 .msg_btn {
-  border: 0px;
   font-size: 48px;
-  border-radius: 50%;
   cursor: pointer;
-  font-size: 48px;
-  height: 50px;
   position: absolute;
-  right: 0px;
-  top: 0px;
-  width: 50px;
+  right: 50px;
+  top: 3px;
+  width: 5%;
+}
+.stop {
+  width: 25px;
+  height: 25px;
+  border: none;
+  cursor: pointer;
+  position: absolute;
+  right: 10px;
+  top: 11px;
+  background-color: red;
+  visibility: hidden;
+}
+.audio {
+  color: #747474;
+  display: block;
+  font-size: 12px;
+  margin: 8px 0 0;
+  float: right;
+  visibility: hidden;
+}
+img {
+  cursor: pointer;
+  float: right;
+  right: 0%;
+  visibility: hidden;
 }
 .messaging {
   padding: 0 0 50px 0;
