@@ -106,6 +106,7 @@ export default {
       });
     },
     stopRecording() {
+      document.getElementById('stopButton').style = 'visibility:hidden';
       recorder.stop();
     },
 
